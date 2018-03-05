@@ -1,16 +1,21 @@
 package com.engines.elevators
 
+import com.sun.xml.internal.ws.handler.HandlerProcessor.Direction
+
 import scala.collection.mutable.ArrayBuffer
+
+object Direction extends Enumeration{
+  val Up = Value("Up"),
+  val Down = Value("Down")
+}
 
 abstract class FloorQueue{
   def get(): Int
   def put(x: Int)
 }
 
-trait BasicFloorQueue extends FloorQueue{
-  //true -> up
-  //false -> down
-  protected var direction: Boolean = true
+class BasicFloorQueue extends FloorQueue{
+  var direction: Direction = Direction.Up
 
   protected var currentFloor: Int = 0
 
@@ -21,7 +26,7 @@ trait BasicFloorQueue extends FloorQueue{
   override def put(x: Int): Unit = {buf += x}
 }
 
-trait Filtering extends BasicFloorQueue {
+trait FilteringElevator extends FloorQueue {
   abstract override def put(x: Int): Unit = {
     if (!buf.exists(_ == x)){
       super.put(x)
@@ -29,20 +34,35 @@ trait Filtering extends BasicFloorQueue {
   }
 }
 
-trait OrderElevator extends BasicFloorQueue{
+trait OrderElevator extends FloorQueue{
   abstract override def put(x: Int): Unit = {
     super.put(x)
-    buf = buf.sorted(if (direction) Ordering.Int else Ordering.Int.reverse)
+    buf = buf.sorted(if (direction.Up) Ordering.Int else Ordering.Int.reverse)
   }
 }
 
 trait ElevatorControl {
   def status(): Seq[(Int, Int, Int)]
   def update(x:Int, y:Int, z:Int)
-  def pickup(floor: Int, direction: Boolean)
+  def pickup(floor: Int, direction: Direction)
   def step()
 }
 
-class ElevatorEngine {
+class ElevatorEngine extends ElevatorControl{
 
+  val elequeue = (new BasicFloorQueue with FilteringElevator with OrderElevator)
+
+  def pickup(floor: Int, direction: Direction): Unit ={
+
+    elequeue.direction = direction
+    elequeue.put(floor)
+  }
+
+}
+
+object ElevatorEngineApp extends App {
+
+  def ElevatorEngineApp(): Unit ={
+
+  }
 }
